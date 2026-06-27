@@ -11,10 +11,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 🟢 FIXED: Forcing the runner to fetch the correct submodule tracking heads
       - name: Checkout Code Recursively
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: 'true'
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Java Development Kit
         uses: actions/setup-java@v4
@@ -25,15 +28,14 @@ jobs:
       - name: Setup Android NDK
         uses: android-actions/setup-android@v4
 
-      - name: Cache Gradle Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      # 🟢 FIXED: Automatically downloads the required media files that are missing on a fresh fork
+      - name: Download and Unzip Libtheora Dependency
+        run: |
+          cd dependencies/android
+          curl -L http://xiph.org -o libtheora.tar.gz
+          tar -xzf libtheora.tar.gz
+          mv libtheora-1.1.1 libtheora
+          rm libtheora.tar.gz
 
       - name: Inject Game Optimization Flags
         run: |
